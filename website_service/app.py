@@ -13,6 +13,7 @@ def search():
     response = requests.get(f'http://api-service/weather?location={location}')
     if response.status_code == 200:
         weather_data = response.json()
+        print(weather_data)  # Debug statement
     else:
         weather_data = None
     return render_template('index.html', weather=weather_data)
