@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <title>Weather Search</title>
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        body {
+            font-family: Arial, sans-serif;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        form {
+            margin-bottom: 20px;
         }
-        th {
-            background-color: #f2f2f2;
-            text-align: left;
+        .chart-container {
+            width: 800px;
+            height: 400px;
         }
     </style>
+    <!-- Include Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <form method="post" action="/search">
@@ -25,18 +25,50 @@
     </form>
     {% if weather %}
         <h3>Weather Data:</h3>
-        <table>
-            <tr>
-                <th>Time</th>
-                <th>Temperature (°C)</th>
-            </tr>
-            {% for data in weather %}
-                <tr>
-                    <td>{{ data.time }}</td>
-                    <td>{{ data.temperature }}</td>
-                </tr>
-            {% endfor %}
-        </table>
+        <div class="chart-container">
+            <canvas id="weatherChart"></canvas>
+        </div>
+        <script>
+            var ctx = document.getElementById('weatherChart').getContext('2d');
+            var weatherData = {{ weather | tojson }};
+            var labels = weatherData.map(data => data.time);
+            var temperatures = weatherData.map(data => data.temperature);
+
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: temperatures,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'hour'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)'
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
     {% endif %}
 </body>
 </html>
