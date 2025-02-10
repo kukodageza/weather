@@ -9,5 +9,22 @@ service:
   type: ClusterIP
   port: 80
 
-ingress:
-  enabled: false
+websiteService:
+  replicas: 1
+  image:
+    repository: localhost:5000/website-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+
+apiService:
+  replicas: 1
+  image:
+    repository: localhost:5000/weather-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80

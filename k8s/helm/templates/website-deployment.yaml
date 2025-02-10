@@ -1,36 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: website-service
+  name: {{ .Release.Name }}-website
 spec:
   replicas: {{ .Values.websiteService.replicas }}
   selector:
     matchLabels:
-      app: website-service
+      app: {{ .Release.Name }}-website
   template:
     metadata:
       labels:
-        app: website-service
+        app: {{ .Release.Name }}-website
     spec:
       containers:
       - name: website-service
-        image: {{ .Values.websiteService.image }}
-        env:
-          - name: API_URL
-            value: "http://api-service"
+        image: "{{ .Values.websiteService.image.repository }}:{{ .Values.websiteService.image.tag }}"
+        imagePullPolicy: {{ .Values.websiteService.image.pullPolicy }}
         ports:
-          - containerPort: {{ .Values.websiteService.port }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: website-service
-spec:
-  selector:
-    app: website-service
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: {{ .Values.websiteService.port }}
-      nodePort: 30001  # Specify the fixed NodePort here
-  type: NodePort
+        - containerPort: 8080
