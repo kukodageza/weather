@@ -15,12 +15,14 @@
             height: 400px;
         }
     </style>
-    <!-- Include Chart.js from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Moment.js and Chart.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@0.1.1/dist/chartjs-adapter-moment.min.js"></script>
 </head>
 <body>
     <form method="post" action="/search">
-        <input type="text" name="location" placeholder="Enter location">
+        <input type="text" name="location" placeholder="Enter location" required>
         <button type="submit">Search</button>
     </form>
     {% if weather %}
@@ -50,9 +52,10 @@
                     responsive: true,
                     scales: {
                         x: {
-                            type: 'time',
+                            type: 'timeseries',
                             time: {
-                                unit: 'hour'
+                                unit: 'hour',
+                                tooltipFormat: 'll HH:mm'
                             },
                             title: {
                                 display: true,
