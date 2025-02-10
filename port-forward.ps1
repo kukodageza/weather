@@ -6,12 +6,12 @@ function Stop-PortProcess {
     $processes = netstat -ano | Select-String ":$Port" | ForEach-Object {
         $_.ToString().Split(" ", [System.StringSplitOptions]::RemoveEmptyEntries)[-1]
     }
-    foreach ($pid in $processes) {
+    foreach ($processId in $processes) {
         try {
-            Stop-Process -Id $pid -Force -ErrorAction Stop
-            Write-Host "Stopped process with PID $pid using port $Port"
+            Stop-Process -Id $processId -Force -ErrorAction Stop
+            Write-Host "Stopped process with PID $processId using port $Port"
         } catch {
-            Write-Host "Failed to stop process with PID $pid using port $Port"
+            Write-Host "Failed to stop process with PID $processId using port $Port"
         }
     }
 }
