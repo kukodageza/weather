@@ -1,0 +1,4 @@
+apiVersion: v2
+name: weather-app
+description: A Helm chart for the weather app
+version: 0.1.0

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Search</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <form method="post" action="/search">
+        <input type="text" name="location" placeholder="Enter location">
+        <button type="submit">Search</button>
+    </form>
+    {% if weather %}
+        <h3>Weather Data:</h3>
+        <table>
+            <tr>
+                <th>Time</th>
+                <th>Temperature (°C)</th>
+            </tr>
+            {% for data in weather %}
+                <tr>
+                    <td>{{ data.time }}</td>
+                    <td>{{ data.temperature }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-service
+spec:
+  replicas: {{ .Values.websiteService.replicas }}
+  selector:
+    matchLabels:
+      app: website-service
+  template:
+    metadata:
+      labels:
+        app: website-service
+    spec:
+      containers:
+      - name: website-service
+        image: {{ .Values.websiteService.image }}
+        env:
+          - name: API_URL
+            value: "http://api-service"
+        ports:
+          - containerPort: {{ .Values.websiteService.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: website-service
+spec:
+  selector:
+    app: website-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: {{ .Values.websiteService.port }}
+  type: NodePort

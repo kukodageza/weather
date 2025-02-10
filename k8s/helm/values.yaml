@@ -1,0 +1,8 @@
+apiService:
+  image: localhost:5000/weather-api:latest
+  replicas: 1
+
+websiteService:
+  image: localhost:5000/website-service:latest
+  replicas: 1
+  port: 5001
