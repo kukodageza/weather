@@ -118,3 +118,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack --namespace m
 helm install grafana grafana/grafana --namespace monitoring
 
 Write-Host "Deployment completed successfully."
+
+# Run port-forward script
+Write-Host "Starting port-forwarding for Prometheus and Grafana..."
+.\port-forward.ps1
