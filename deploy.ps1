@@ -129,6 +129,10 @@ helm install grafana grafana/grafana --namespace monitoring
 
 Write-Host "Deployment completed successfully."
 
+# Apply the Prometheus additional configuration from the repo
+Write-Host "Applying Prometheus additional configuration..."
+kubectl apply -f ./prometheus-additional.yaml --namespace monitoring
+
 # Run port-forward script
 Write-Host "Starting port-forwarding for Prometheus and Grafana..."
 .\port-forward.ps1
