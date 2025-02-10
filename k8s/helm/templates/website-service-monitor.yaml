@@ -3,9 +3,15 @@ kind: ServiceMonitor
 metadata:
   name: website-service-monitor
   namespace: monitoring
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: weather-app
+    meta.helm.sh/release-namespace: default
 spec:
   selector:
     matchLabels:
       app: website-service
   endpoints:
   - port: http
+    path: /metrics
