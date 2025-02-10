@@ -1,8 +1,13 @@
-apiService:
-  image: localhost:5000/weather-api:latest
-  replicas: 1
+replicaCount: 1
 
-websiteService:
-  image: localhost:5000/website-service:latest
-  replicas: 1
-  port: 5001
+image:
+  repository: localhost:5000/weather-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
