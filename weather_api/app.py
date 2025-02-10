@@ -2,6 +2,7 @@ import logging
 from flask import Flask, request, jsonify
 import requests
 from geopy.geocoders import Nominatim
+from prometheus_client import Counter, generate_latest
 
 app = Flask(__name__)
 
@@ -9,6 +10,9 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 geolocator = Nominatim(user_agent="weather_api")
+
+# Prometheus metrics
+REQUEST_COUNT = Counter('weather_api_requests_total', 'Total number of requests to weather API', ['method', 'endpoint'])
 
 def get_coordinates(city_name):
     location = geolocator.geocode(city_name)
@@ -31,6 +35,7 @@ def get_weather():
     
     # Log the request
     logging.info(f"Received request for weather data: location={city_name}")
+    REQUEST_COUNT.labels(method='GET', endpoint='/weather').inc()
 
     latitude, longitude = get_coordinates(city_name)
 
@@ -47,6 +52,10 @@ def get_weather():
     else:
         logging.warning(f"City not found: location={city_name}")
         return jsonify({"error": "City not found"}), 404
+
+@app.route('/metrics', methods=['GET'])
+def metrics():
+    return generate_latest(), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
