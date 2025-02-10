@@ -1,17 +1,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: website-service-monitor
-  namespace: monitoring
+  name: {{ .Release.Name }}-website
   labels:
-    app.kubernetes.io/managed-by: Helm
-  annotations:
-    meta.helm.sh/release-name: weather-app
-    meta.helm.sh/release-namespace: default
+    release: {{ .Release.Name }}
 spec:
   selector:
     matchLabels:
-      app: website-service
+      app: {{ .Release.Name }}-website
   endpoints:
-  - port: http
-    path: /metrics
+  - port: web
+    interval: 30s
