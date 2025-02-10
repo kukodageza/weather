@@ -1,7 +1,7 @@
 # Ensure running as Administrator
 If (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "You must run this script as an Administrator!" -ForegroundColor Red
-    Start-Process powershell -Verb runAs -ArgumentList "-File `"$PSCommandPath`"" 
+    Start-Process powershell -Verb runAs -ArgumentList "-File `"$PSCommandPath`""
     Exit 0
 }
 
@@ -38,6 +38,32 @@ if (-not (kubectl get nodes --no-headers 2>$null)) {
 
 Write-Host "Rancher Desktop and Kubernetes are running."
 
+# Remove existing Helm releases
+Write-Host "Removing existing Helm releases..."
+$releases = helm list --all --short
+if ($releases) {
+    $releases | ForEach-Object {
+        Write-Host "Uninstalling Helm release: $_"
+        helm uninstall $_
+    }
+    Write-Host "All Helm releases removed."
+} else {
+    Write-Host "No existing Helm releases found."
+}
+
+# Remove existing namespaces
+Write-Host "Removing existing namespaces..."
+$namespaces = @("monitoring", "default")
+foreach ($namespace in $namespaces) {
+    if (kubectl get namespace $namespace -o name) {
+        Write-Host "Deleting namespace: $namespace"
+        kubectl delete namespace $namespace
+        Write-Host "Namespace '$namespace' removed."
+    } else {
+        Write-Host "Namespace '$namespace' not found."
+    }
+}
+
 # Install Helm if not already installed
 if (-not (Get-Command helm -ErrorAction SilentlyContinue)) {
     Write-Host "Helm not found. Installing Helm..."
@@ -61,60 +87,44 @@ if (-Not (Test-Path -Path $kubeConfig)) {
     exit 1
 }
 
-# Check Nerdctl CLI installation
-if (-not (Get-Command nerdctl -ErrorAction SilentlyContinue)) {
-    Write-Host "nerdctl not found in PATH. Please ensure nerdctl is available via Rancher Desktop and PATH is configured correctly."
-    exit 1
-}
-
 # Build and push Docker images to the local registry (assuming nerdctl for containerd)
 Write-Host "Building and pushing Docker images..."
 
-# Ensure Nerdctl registry is running with HTTP support
-try {
-    $registryRunning = $(nerdctl ps --filter "name=registry" --quiet)
-    if (-not $registryRunning) {
-        Write-Host "Starting local Docker registry..."
-        nerdctl run -d -p 5000:5000 --name registry --restart=always -e "REGISTRY_HTTP_ADDR=0.0.0.0:5000" registry:2
-    } else {
-        Write-Host "Local Docker registry is already running."
-    }
-} catch {
-    Write-Host "Failed to start local registry."
-    exit 1
-}
-
-# Build and push weather-api image with HTTP support
+# Build and push weather-api image with nerdctl
 Write-Host "Building weather-api..."
 cd weather_api
 nerdctl build -t localhost:5000/weather-api:latest .
 nerdctl push localhost:5000/weather-api:latest
 
-# Build and push website-service image with HTTP support
+# Build and push website-service image with nerdctl
 Write-Host "Building website-service..."
 cd ../website_service
 nerdctl build -t localhost:5000/website-service:latest .
 nerdctl push localhost:5000/website-service:latest
 
+# Create the "monitoring" namespace
+Write-Host "Creating 'monitoring' namespace..."
+kubectl create namespace monitoring
+
+# Install CRDs required for ServiceMonitor
+Write-Host "Installing required CRDs..."
+kubectl apply --server-side -f https://github.com/prometheus-operator/prometheus-operator/raw/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+
 # Deploy using Helm
 Write-Host "Deploying with Helm..."
 cd ..
 helm repo add stable https://charts.helm.sh/stable
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 
-# Check if release exists
-$releaseExists = helm ls --all --short | Select-String -Pattern "weather-app"
-if ($releaseExists) {
-    Write-Host "Existing Helm release found. Uninstalling..."
-    helm uninstall weather-app
-}
+# Install Helm releases
+Write-Host "Installing Helm release: weather-app"
+helm install weather-app ./k8s/helm/ --namespace default
 
-# Install Helm release
-helm install weather-app ./k8s/helm/
-
-# Install Prometheus and Grafana
-Write-Host "Installing Prometheus and Grafana..."
+Write-Host "Installing Helm release: prometheus"
 helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
+
+Write-Host "Installing Helm release: grafana"
 helm install grafana grafana/grafana --namespace monitoring
 
 Write-Host "Deployment completed successfully."
@@ -122,3 +132,13 @@ Write-Host "Deployment completed successfully."
 # Run port-forward script
 Write-Host "Starting port-forwarding for Prometheus and Grafana..."
 .\port-forward.ps1
+
+# Retrieve and decode Grafana admin password
+try {
+    Write-Host "Retrieving Grafana admin password..."
+    $adminPassword = kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}"
+    $decodedPassword = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($adminPassword))
+    Write-Host "Grafana admin password: $decodedPassword"
+} catch {
+    Write-Host "Failed to retrieve Grafana admin password. Please check the secret in the 'monitoring' namespace."
+}
