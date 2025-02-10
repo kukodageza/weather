@@ -20,6 +20,9 @@ function Stop-PortProcess {
 Stop-PortProcess -Port 3000
 Stop-PortProcess -Port 9090
 
+# Wait a moment to ensure processes are fully stopped
+Start-Sleep -Seconds 5
+
 # Start port-forwarding for Prometheus and Grafana
 kubectl port-forward svc/prometheus 9090:9090 &
 kubectl port-forward svc/grafana 3000:3000 &
