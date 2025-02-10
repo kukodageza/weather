@@ -1,7 +1,7 @@
 # Ensure running as Administrator
 If (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "You must run this script as an Administrator!" -ForegroundColor Red
-    Start-Process powershell -Verb runAs -ArgumentList "-File `"$PSCommandPath`""
+    Start-Process powershell -Verb runAs -ArgumentList "-File `"$PSCommandPath`"" 
     Exit 0
 }
 
@@ -111,5 +111,10 @@ if ($releaseExists) {
 
 # Install Helm release
 helm install weather-app ./k8s/helm/
+
+# Install Prometheus and Grafana
+Write-Host "Installing Prometheus and Grafana..."
+helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
+helm install grafana grafana/grafana --namespace monitoring
 
 Write-Host "Deployment completed successfully."
