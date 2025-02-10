@@ -32,4 +32,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: {{ .Values.websiteService.port }}
+      nodePort: 30001  # Specify the fixed NodePort here
   type: NodePort
